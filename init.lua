@@ -98,8 +98,9 @@ do
   vim.g.mapleader = ' '
   vim.g.maplocalleader = ' '
 
-  -- Set to true if you have a Nerd Font installed and selected in the terminal
-  vim.g.have_nerd_font = false
+  -- Set to true if you have a Nerd Font installed and selected in the terminal.
+  -- false avoids missing-glyph boxes (tofu) on terminals without a Nerd Font.
+  vim.g.have_nerd_font = true
 
   -- [[ Setting options ]]
   --  See `:help vim.o`
@@ -108,9 +109,9 @@ do
 
   -- Make line numbers default
   vim.o.number = true
-  -- You can also add relative line numbers, to help with jumping.
-  --  Experiment for yourself to see if you like it!
-  -- vim.o.relativenumber = true
+  -- Relative line numbers: current line shows its absolute number, while lines
+  -- above and below show their distance from it (handy for `5j`, `3k`, etc.).
+  vim.o.relativenumber = true
 
   -- Enable mouse mode, can be useful for resizing splits for example!
   vim.o.mouse = 'a'
@@ -692,10 +693,12 @@ do
   --  See `:help lsp-config` for information about keys and how to configure
   ---@type table<string, vim.lsp.Config>
   local servers = {
-    -- clangd = {},
-    -- gopls = {},
-    -- pyright = {},
-    -- rust_analyzer = {},
+    clangd = {},
+    gopls = {},
+    basedpyright = {},
+    ruff = {},
+    rust_analyzer = {},
+    ts_ls = {},
     --
     -- Some languages (like typescript) have entire language plugins that can be useful:
     --    https://github.com/pmizio/typescript-tools.nvim
@@ -760,6 +763,12 @@ do
   local ensure_installed = vim.tbl_keys(servers or {})
   vim.list_extend(ensure_installed, {
     -- You can add other tools here that you want Mason to install
+    'clang-format', -- C/C++ formatter
+    'codelldb', -- C/C++/Rust debug adapter
+    'debugpy', -- Python debug adapter
+    'goimports', -- Go formatter + import management
+    'prettierd', -- JS/TS/JSON/YAML formatter
+    'js-debug-adapter', -- JS/TS debug adapter
   })
 
   require('mason-tool-installer').setup { ensure_installed = ensure_installed }
@@ -796,7 +805,18 @@ do
     },
     -- You can also specify external formatters in here.
     formatters_by_ft = {
-      -- rust = { 'rustfmt' },
+      c = { 'clang_format' },
+      cpp = { 'clang_format' },
+      python = { 'ruff_format' },
+      go = { 'goimports', 'gofmt' },
+      rust = { 'rustfmt' },
+      javascript = { 'prettierd', 'prettier', stop_after_first = true },
+      typescript = { 'prettierd', 'prettier', stop_after_first = true },
+      javascriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+      typescriptreact = { 'prettierd', 'prettier', stop_after_first = true },
+      json = { 'prettierd', 'prettier', stop_after_first = true },
+      jsonc = { 'prettierd', 'prettier', stop_after_first = true },
+      yaml = { 'prettierd', 'prettier', stop_after_first = true },
       -- Conform can also run multiple formatters sequentially
       -- python = { "isort", "black" },
       --
@@ -904,7 +924,32 @@ do
   vim.pack.add { { src = gh 'nvim-treesitter/nvim-treesitter', version = 'main' } }
 
   -- Ensure basic parsers are installed
-  local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+  local parsers = {
+    'bash',
+    'c',
+    'cpp',
+    'diff',
+    'html',
+    'lua',
+    'luadoc',
+    'markdown',
+    'markdown_inline',
+    'query',
+    'vim',
+    'vimdoc',
+    'python',
+    'go',
+    'gomod',
+    'gosum',
+    'rust',
+    'javascript',
+    'typescript',
+    'tsx',
+    'json',
+    'yaml',
+    'toml',
+    'gitcommit',
+  }
   require('nvim-treesitter').install(parsers)
 
   ---@param buf integer
@@ -976,7 +1021,7 @@ do
   -- NOTE: You can add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- require 'custom.plugins'
+  require 'custom.plugins'
 end
 
 -- The line beneath this is called `modeline`. See `:help modeline`
